@@ -20,7 +20,6 @@
     },
     "forwardPorts": [8188],
     "postCreateCommand": "pip install -r requirements.txt && python -c \"import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA device count: {torch.cuda.device_count()}')\"",
-    "postStartCommand": "python main.py --listen 0.0.0.0 --port 8188 --enable-cors-header &",
     "remoteUser": "vscode",
     "runArgs": [
         "--network=devcontainer_elizaos_net",
