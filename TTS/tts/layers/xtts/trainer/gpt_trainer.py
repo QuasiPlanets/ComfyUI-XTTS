@@ -89,7 +89,9 @@ class GPTTrainer(BaseTTS):
 
         # load GPT if available
         if self.args.gpt_checkpoint:
-            gpt_checkpoint = torch.load(self.args.gpt_checkpoint, map_location=torch.device("cpu"))
+            # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+            # to allow loading custom model state
+            gpt_checkpoint = torch.load(self.args.gpt_checkpoint, map_location=torch.device("cpu"), weights_only=False)
             # deal with coqui Trainer exported model
             if "model" in gpt_checkpoint.keys() and "config" in gpt_checkpoint.keys():
                 print("Coqui Trainer checkpoint detected! Converting it!")
@@ -182,7 +184,9 @@ class GPTTrainer(BaseTTS):
 
         self.dvae.eval()
         if self.args.dvae_checkpoint:
-            dvae_checkpoint = torch.load(self.args.dvae_checkpoint, map_location=torch.device("cpu"))
+            # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+            # to allow loading custom model state
+            dvae_checkpoint = torch.load(self.args.dvae_checkpoint, map_location=torch.device("cpu"), weights_only=False)
             self.dvae.load_state_dict(dvae_checkpoint, strict=False)
             print(">> DVAE weights restored from:", self.args.dvae_checkpoint)
         else:

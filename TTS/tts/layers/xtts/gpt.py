@@ -63,6 +63,8 @@ def build_hf_gpt_transformer(
         n_head=heads,
         gradient_checkpointing=checkpointing,
         use_cache=not checkpointing,
+        pad_token_id=0,  # Explicitly set pad token to 0
+        eos_token_id=2,  # Set eos token to different value
     )
     gpt = GPT2Model(gpt_config)
     # Override the built in positional embeddings
@@ -590,7 +592,7 @@ class GPT(nn.Module):
         gen = self.gpt_inference.generate(
             gpt_inputs,
             bos_token_id=self.start_audio_token,
-            pad_token_id=self.stop_audio_token,
+            pad_token_id=0,  # Use 0 as pad token to avoid confusion with stop token
             eos_token_id=self.stop_audio_token,
             max_length=self.max_gen_mel_tokens + gpt_inputs.shape[-1],
             **hf_generate_kwargs,
@@ -603,7 +605,7 @@ class GPT(nn.Module):
         return self.gpt_inference.generate_stream(
             fake_inputs,
             bos_token_id=self.start_audio_token,
-            pad_token_id=self.stop_audio_token,
+            pad_token_id=0,  # Use 0 as pad token to avoid confusion with stop token
             eos_token_id=self.stop_audio_token,
             max_length=self.max_gen_mel_tokens + fake_inputs.shape[-1],
             do_stream=True,

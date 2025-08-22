@@ -17,7 +17,9 @@ def load_file(path: str):
             return json.load(f)
     elif path.endswith(".pth"):
         with fsspec.open(path, "rb") as f:
-            return torch.load(f, map_location="cpu")
+            # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+            # to allow loading custom model state
+            return torch.load(f, map_location="cpu", weights_only=False)
     else:
         raise ValueError("Unsupported file type")
 

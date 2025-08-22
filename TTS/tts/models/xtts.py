@@ -61,7 +61,9 @@ def wav_to_mel_cloning(
     mel = mel_stft(wav)
     mel = torch.log(torch.clamp(mel, min=1e-5))
     if mel_norms is None:
-        mel_norms = torch.load(mel_norms_file, map_location=device)
+        # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+        # to allow loading mel normalization data
+        mel_norms = torch.load(mel_norms_file, map_location=device, weights_only=False)
     mel = mel / mel_norms.unsqueeze(0).unsqueeze(-1)
     return mel
 
@@ -711,7 +713,9 @@ class Xtts(BaseTTS):
         super().eval()
 
     def get_compatible_checkpoint_state_dict(self, model_path):
-        checkpoint = load_fsspec(model_path, map_location=torch.device("cpu"))["model"]
+        # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+        # to allow loading custom XTTS classes like XttsConfig
+        checkpoint = load_fsspec(model_path, map_location=torch.device("cpu"), weights_only=False)["model"]
         # remove xtts gpt trainer extra keys
         ignore_keys = ["torch_mel_spectrogram_style_encoder", "torch_mel_spectrogram_dvae", "dvae"]
         for key in list(checkpoint.keys()):

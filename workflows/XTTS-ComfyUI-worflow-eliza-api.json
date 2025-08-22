@@ -1,0 +1,44 @@
+{
+  "1": {
+    "inputs": {
+      "audio": "en_sample.wav",
+      "choose audio file to upload": "Audio"
+    },
+    "class_type": "LoadAudioPath",
+    "_meta": {
+      "title": "LoadAudioPath"
+    }
+  },
+  "2": {
+    "inputs": {
+      "text": "The Hitchhiker's Guide to the Galaxy is, without question, the most wholly remarkable book ever to grace the cosmos. This indispensable tome, published by Megadodo Publications of Ursa Minor Beta, offers practical advice for interstellar travelers, from how to survive a Vogon poetry reading to the precise method of mixing a Pan-Galactic Gargle Blaster. Its sage wisdom, emblazoned with the comforting words \"Don't Panic\" in large, friendly letters, has saved countless hitchhikers from untimely demises in the less hospitable corners of the universe. For instance, it advises that a towel is the most massively useful item a hitchhiker can carry, serving as everything from a blanket to a makeshift gas mask.Arthur Dent, an unassuming Earthman, discovered the Guide’s utility after his planet was demolished to make way for a hyperspace bypass. Whisked into space by his friend Ford Prefect, a roguish researcher for the Guide, Arthur learned the galaxy is far stranger than he’d ever imagined. From the bureaucratic nightmares of Vogsphere to the improbable existence of the Babel fish, which translates any language by lodging itself in your ear, the Guide illuminated the absurdities of cosmic life. Accompanied by Zaphod Beeblebrox, a two-headed ex-Galactic President, and Trillian, a fellow Earth survivor, Arthur’s adventures revealed a universe brimming with wit, chaos, and improbability.The Guide itself, a device resembling an e-reader with a penchant for sarcastic footnotes, remains a beacon of knowledge in a reality where the answer to life, the universe, and everything is famously 42—though the question remains maddeningly elusive. Whether you’re dodging Ravenous Bugblatter Beasts of Traal or seeking the perfect cup of tea, the Hitchhiker's Guide to the Galaxy ensures you’re never entirely lost, even if you’re light-years from home.",
+      "language": "en",
+      "temperature": 0.6800000000000002,
+      "length_penalty": 1,
+      "repetition_penalty": 4,
+      "top_k": 50,
+      "top_p": 0.85,
+      "speed": 1.2000000000000002,
+      "audio": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "XTTS_INFER",
+    "_meta": {
+      "title": "XTTS Inference"
+    }
+  },
+  "3": {
+    "inputs": {
+      "audio": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "PreViewAudio",
+    "_meta": {
+      "title": "PreView Audio"
+    }
+  }
+}

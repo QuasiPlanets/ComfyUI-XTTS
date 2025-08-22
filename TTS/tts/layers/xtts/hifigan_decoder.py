@@ -327,7 +327,9 @@ class HifiganGenerator(torch.nn.Module):
     def load_checkpoint(
         self, config, checkpoint_path, eval=False, cache=False
     ):  # pylint: disable=unused-argument, redefined-builtin
-        state = torch.load(checkpoint_path, map_location=torch.device("cpu"))
+        # Fix for PyTorch 2.6+ compatibility - explicitly set weights_only=False
+        # to allow loading custom model state
+        state = torch.load(checkpoint_path, map_location=torch.device("cpu"), weights_only=False)
         self.load_state_dict(state["model"])
         if eval:
             self.eval()

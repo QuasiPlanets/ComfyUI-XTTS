@@ -9,8 +9,11 @@ from pydub import AudioSegment
 import audiotsm
 import audiotsm.io.wav
 from huggingface_hub import snapshot_download
-from .TTS.tts.models.xtts import Xtts
-from .TTS.tts.configs.xtts_config import XttsConfig
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'TTS'))
+from tts.models.xtts import Xtts
+from tts.configs.xtts_config import XttsConfig
 
 now_dir = os.path.dirname(os.path.abspath(__file__))
 input_path = folder_paths.get_input_directory()
@@ -126,19 +129,72 @@ class XTTS_INFER_SRT:
                 speaker = "SPK0"
             gpt_cond_latent,speaker_embedding = gpt_embedding_dict[speaker]
             print(f"use {speaker} voice Inference: {new_text}")
-            out = model.inference(
-                new_text,
-                language,
-                gpt_cond_latent,
-                speaker_embedding,
-                temperature=temperature, # Add custom parameters here
-                length_penalty=length_penalty,
-                repetition_penalty=repetition_penalty,
-                top_k=top_k,
-                top_p=top_p,
-                speed=speed,
-                enable_text_splitting=True
-            )
+            
+            # Intelligent text chunking for SRT processing
+            max_chars_per_chunk = 250  # Conservative limit for XTTS-v1
+            if len(new_text) > max_chars_per_chunk:
+                print(f"SRT text length ({len(new_text)} chars) exceeds chunk limit, processing in chunks...")
+                # Split into sentences or natural breaks
+                sentences = new_text.replace('!', '.').replace('?', '.').split('.')
+                chunks = []
+                current_chunk = ""
+                
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if not sentence:
+                        continue
+                        
+                    # If adding this sentence would exceed limit, start new chunk
+                    if len(current_chunk + sentence) > max_chars_per_chunk and current_chunk:
+                        chunks.append(current_chunk.strip())
+                        current_chunk = sentence
+                    else:
+                        current_chunk += sentence + ". "
+                
+                # Add the last chunk
+                if current_chunk.strip():
+                    chunks.append(current_chunk.strip())
+                
+                print(f"Split SRT text into {len(chunks)} chunks for processing")
+                
+                # Process each chunk and concatenate audio
+                all_audio = []
+                for j, chunk in enumerate(chunks):
+                    print(f"Processing SRT chunk {j+1}/{len(chunks)}: {chunk[:50]}...")
+                    chunk_out = model.inference(
+                        chunk,
+                        language,
+                        gpt_cond_latent,
+                        speaker_embedding,
+                        temperature=temperature,
+                        length_penalty=length_penalty,
+                        repetition_penalty=repetition_penalty,
+                        top_k=top_k,
+                        top_p=top_p,
+                        speed=speed,
+                        enable_text_splitting=False  # Disable internal splitting since we're doing it manually
+                    )
+                    all_audio.append(chunk_out["wav"])
+                
+                # Concatenate all audio chunks
+                import numpy as np
+                concatenated_audio = np.concatenate(all_audio)
+                out = {"wav": concatenated_audio}
+            else:
+                # Single chunk processing
+                out = model.inference(
+                    new_text,
+                    language,
+                    gpt_cond_latent,
+                    speaker_embedding,
+                    temperature=temperature,
+                    length_penalty=length_penalty,
+                    repetition_penalty=repetition_penalty,
+                    top_k=top_k,
+                    top_p=top_p,
+                    speed=speed,
+                    enable_text_splitting=False  # Disable internal splitting for single chunks
+                )
             wav_path = os.path.join(xtts_tmp_path, f"{i}_xtts.wav")
             torchaudio.save(wav_path, torch.tensor(out["wav"]).unsqueeze(0), 24000,bits_per_sample=16)
             
@@ -252,19 +308,73 @@ class XTTS_INFER:
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(audio_path=[audio])
 
         print("Inference...")
-        out = model.inference(
-            text,
-            language,
-            gpt_cond_latent,
-            speaker_embedding,
-            temperature=temperature, # Add custom parameters here
-            length_penalty=length_penalty,
-            repetition_penalty=repetition_penalty,
-            top_k=top_k,
-            top_p=top_p,
-            speed=speed,
-            enable_text_splitting=True
-        )
+        
+        # Intelligent text chunking for long text (based on operational XTTS patterns)
+        # XTTS-v1 can handle ~250-300 characters per chunk safely
+        max_chars_per_chunk = 250  # Conservative limit for XTTS-v1
+        if len(text) > max_chars_per_chunk:
+            print(f"Text length ({len(text)} chars) exceeds chunk limit, processing in chunks...")
+            # Split into sentences or natural breaks
+            sentences = text.replace('!', '.').replace('?', '.').split('.')
+            chunks = []
+            current_chunk = ""
+            
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if not sentence:
+                    continue
+                    
+                # If adding this sentence would exceed limit, start new chunk
+                if len(current_chunk + sentence) > max_chars_per_chunk and current_chunk:
+                    chunks.append(current_chunk.strip())
+                    current_chunk = sentence
+                else:
+                    current_chunk += sentence + ". "
+            
+            # Add the last chunk
+            if current_chunk.strip():
+                chunks.append(current_chunk.strip())
+            
+            print(f"Split into {len(chunks)} chunks for processing")
+            
+            # Process each chunk and concatenate audio
+            all_audio = []
+            for i, chunk in enumerate(chunks):
+                print(f"Processing chunk {i+1}/{len(chunks)}: {chunk[:50]}...")
+                chunk_out = model.inference(
+                    chunk,
+                    language,
+                    gpt_cond_latent,
+                    speaker_embedding,
+                    temperature=temperature,
+                    length_penalty=length_penalty,
+                    repetition_penalty=repetition_penalty,
+                    top_k=top_k,
+                    top_p=top_p,
+                    speed=speed,
+                    enable_text_splitting=False  # Disable internal splitting since we're doing it manually
+                )
+                all_audio.append(chunk_out["wav"])
+            
+            # Concatenate all audio chunks
+            import numpy as np
+            concatenated_audio = np.concatenate(all_audio)
+            out = {"wav": concatenated_audio}
+        else:
+            # Single chunk processing
+            out = model.inference(
+                text,
+                language,
+                gpt_cond_latent,
+                speaker_embedding,
+                temperature=temperature,
+                length_penalty=length_penalty,
+                repetition_penalty=repetition_penalty,
+                top_k=top_k,
+                top_p=top_p,
+                speed=speed,
+                enable_text_splitting=False  # Disable internal splitting for single chunks
+            )
         wav_path = os.path.join(output_path, f"{time.time()}_xtts.wav")
         torchaudio.save(wav_path, torch.tensor(out["wav"]).unsqueeze(0), 24000,bits_per_sample=16)
         del model;import gc;gc.collect();torch.cuda.empty_cache()

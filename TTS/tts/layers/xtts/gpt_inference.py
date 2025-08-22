@@ -2,11 +2,11 @@ import math
 
 import torch
 from torch import nn
-from transformers import GPT2PreTrainedModel
+from transformers import GPT2LMHeadModel, GenerationMixin
 from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 
 
-class GPT2InferenceModel(GPT2PreTrainedModel):
+class GPT2InferenceModel(GPT2LMHeadModel, GenerationMixin):
     """Override GPT2LMHeadModel to allow for prefix conditioning."""
 
     def __init__(self, config, gpt, pos_emb, embeddings, norm, linear, kv_cache):
@@ -122,6 +122,33 @@ class GPT2InferenceModel(GPT2PreTrainedModel):
             attentions=transformer_outputs.attentions,
             cross_attentions=transformer_outputs.cross_attentions,
         )
+
+    def generate(self, input_ids, **kwargs):
+        """
+        Generate method that delegates to the parent class generate method.
+        This is needed because the GPT2InferenceModel inherits from GPT2LMHeadModel
+        which has the generate method.
+        """
+        # Fix for attention mask warning when pad_token_id equals eos_token_id
+        if 'attention_mask' not in kwargs and input_ids is not None:
+            # Create attention mask manually to avoid the warning
+            attention_mask = torch.ones_like(input_ids)
+            kwargs['attention_mask'] = attention_mask
+        
+        return super().generate(input_ids, **kwargs)
+
+    def generate_stream(self, input_ids, **kwargs):
+        """
+        Generate stream method that delegates to the parent class generate method.
+        This is needed for streaming generation support.
+        """
+        # Fix for attention mask warning when pad_token_id equals eos_token_id
+        if 'attention_mask' not in kwargs and input_ids is not None:
+            # Create attention mask manually to avoid the warning
+            attention_mask = torch.ones_like(input_ids)
+            kwargs['attention_mask'] = attention_mask
+        
+        return super().generate(input_ids, **kwargs)
 
     @staticmethod
     def _reorder_cache(past, beam_idx):

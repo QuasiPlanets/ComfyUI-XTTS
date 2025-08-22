@@ -1,6 +1,6 @@
 # core deps
-cython>=0.29.30
-scipy==1.15.3
+cython==3.1.3
+scipy==1.11.4
 soundfile==0.13.1
 librosa==0.10.0
 scikit-learn==1.7.1
@@ -8,13 +8,13 @@ numba==0.60.0
 inflect==7.5.0
 tqdm==4.67.1
 anyascii==0.3.3
-pyyaml>=6.0
+pyyaml==6.0.2
 fsspec==2025.7.0
-aiohttp==3.12.14
+aiohttp==3.12.15
 packaging==25.0
 mutagen==1.47.0
 # deps for examples
-flask>=2.0.1
+flask==3.1.2
 # deps for inference
 pysbd==0.3.4
 # deps for notebooks
@@ -30,7 +30,7 @@ coqpit==0.0.17
 jieba==0.42.1
 pypinyin==0.55.0
 # korean
-hangul_romanize
+hangul-romanize==0.1.0
 # gruut+supported langs
 gruut==2.2.3
 # deps for korean
@@ -43,13 +43,14 @@ bnnumerizer==0.0.2
 bnunicodenormalizer==0.1.7
 #deps for tortoise
 einops==0.8.1
-transformers==4.46.1
+# XTTS-v2 compatibility fix: transformers 4.52+ causes corrupted audio
+transformers==4.51.0
 #deps for bark
 encodec==0.1.1
 # deps for XTTS
-unidecode>=1.3.2
-num2words==0.5.16
-spacy[ja]>=3
+unidecode==1.4.0
+num2words==0.5.14
+spacy[ja]==3.8.7
 mecab-python3==1.0.6
 unidic-lite==1.0.8
 cutlet==0.5.0
@@ -57,3 +58,4 @@ pydub==0.25.1
 srt==3.5.3
 audiotsm==0.1.2
 numpy==1.26.4
+TTS==0.22.0

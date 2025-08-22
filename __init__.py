@@ -1,7 +1,17 @@
 import site
 import os,sys
 import logging
-from server import PromptServer
+
+# Add ComfyUI root to Python path to ensure utils package is available
+comfyui_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if comfyui_root not in sys.path:
+    sys.path.insert(0, comfyui_root)
+
+try:
+    from server import PromptServer
+except ImportError as e:
+    print(f"Warning: Could not import PromptServer: {e}")
+    PromptServer = None
 
 now_dir = os.path.dirname(os.path.abspath(__file__))
 site_packages_roots = []
@@ -35,7 +45,18 @@ else:
 
 
 WEB_DIRECTORY = "./web"
-from .nodes import LoadSRT,LoadAudioPath, PreViewAudio,XTTS_INFER, XTTS_INFER_SRT
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
+# Import from local nodes.py file
+try:
+    from .nodes import LoadSRT,LoadAudioPath, PreViewAudio,XTTS_INFER, XTTS_INFER_SRT
+except ImportError:
+    # Fallback to direct import
+    import sys
+    sys.path.insert(0, os.path.dirname(__file__))
+    from nodes import LoadSRT,LoadAudioPath, PreViewAudio,XTTS_INFER, XTTS_INFER_SRT
 
 # Set the web directory, any .js file in that directory will be loaded by the frontend as a frontend extension
 # WEB_DIRECTORY = "./somejs"
@@ -59,11 +80,16 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "XTTS_INFER_SRT": "XTTS Inference with srt"
 }
 
-@PromptServer.instance.routes.get("/xtts/reboot")
-def restart(self):
-    try:
-        sys.stdout.close_log()
-    except Exception as e:
-        pass
+# Only register routes if PromptServer is available (i.e., when running in ComfyUI)
+try:
+    @PromptServer.instance.routes.get("/xtts/reboot")
+    def restart(self):
+        try:
+            sys.stdout.close_log()
+        except Exception as e:
+            pass
 
-    return os.execv(sys.executable, [sys.executable] + sys.argv)
+        return os.execv(sys.executable, [sys.executable] + sys.argv)
+except AttributeError:
+    # PromptServer not available, skip route registration
+    pass
